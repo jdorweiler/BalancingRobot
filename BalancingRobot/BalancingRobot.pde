@@ -1,4 +1,4 @@
-//Balancing Robot by Jason Dorweiler
+//Balancing Robot by Jason Dorweiler http://www.jddorweiler.appspot.com/electronics.html#robot
 //  Much of the code is adapted from http://www.arduino.cc/cgi-bin/yabb2/YaBB.pl?num=1284738418/all
 // and http://www.kerrywong.com/2012/03/08/a-self-balancing-robot-i
 // this version uses a 6DOF board (http://www.csgshop.com/product.php?id_product=64) and servo motors (https://www.adafruit.com/products/154)
@@ -14,7 +14,7 @@
 #define TO_READ (6)      //num of bytes to read each time (two bytes for each axis)
 #define   LINE_END              10                             // \n
 #define   SPLIT                 58                             // :
-#define CTRL_REG1 0x20 // gyroscope stuff
+#define CTRL_REG1 0x20 // gyroscope registers
 #define CTRL_REG2 0x21
 #define CTRL_REG3 0x22
 #define CTRL_REG4 0x23
@@ -41,10 +41,18 @@ float motorOffsetR = 1;        //The offset for right motor
 byte buff[TO_READ] ;    //6 bytes buffer for saving data read from the device
 char str[512];          //string buffer to transform data before sending it to the serial port
 
-double Setpoint=-5;
-double aggK=0.5, aggKp=5, aggKi=.5, aggKd=4; //Define the aggressive and conservative Tuning Parameters
-double consK=0.2, consKp=5, consKi=.2, consKd=1;
 
+
+//********************Change the tuning parameters here**********************
+//Setpoint.  Find where the robot is balanced.  
+double Setpoint=-5;
+//Point where it switches from conservative to agressive 
+int gapDist=15;
+//Aggressive
+double aggK=0.5, aggKp=5, aggKi=.5, aggKd=4; 
+//Conservative
+double consK=0.2, consKp=5, consKi=.2, consKd=1;
+//***************************************************************************
 
 void setup() {
   servo1.attach(5);
@@ -71,7 +79,7 @@ void loop() {
 
 // *********************** PID and motor drive *****************
    double gap = abs(Setpoint-actAngle); //distance away from setpoint
-  if(gap<15)
+  if(gap<gapDist)
   {  //we're close to setpoint, use conservative tuning parameters
     drive = updatePid(Setpoint, actAngle, consK, consKp, consKi, consKd);
   }
